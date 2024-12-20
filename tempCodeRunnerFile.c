@@ -28,12 +28,6 @@ void Print(const List l) {
     }
 }
 
-void PrintDeleted(const List l) {
-    for (List temp = l; temp; temp = temp->next) {
-        printf("%d %s %s %s\n", temp->ID, temp->time, temp->size, temp->location);
-    }
-}
-
 int FindByID(List l, int ID) {
     int pos = 1;
     while (l) {
@@ -55,13 +49,7 @@ int FindByID(List l, int ID) {
 void FindByDateAndLocation(List l, int year, int month, int day, int hour, const char* location) {
     int found = 0;
     char date[9];
-    char year_str[5], month_str[3], day_str[3];
-    sprintf(year_str, "%04d", year);
-    sprintf(month_str, "%02d", month);
-    sprintf(day_str, "%02d", day);
-    strcpy(date, year_str);
-    strcat(date, month_str);
-    strcat(date, day_str);
+    sprintf(date, "%04d%02d%02d", year, month, day);
 
     while (l) {
         // Kiểm tra ngày tháng năm và địa điểm
@@ -80,6 +68,7 @@ void FindByDateAndLocation(List l, int year, int month, int day, int hour, const
 }
 
 List Insert(List l, const char* time, const char* size, const char* location) {
+    // Tạo ID mới tự động
     int ID = nextID++;
     Photo* e = (Photo*)malloc(sizeof(Photo));
     e->ID = ID;
@@ -88,8 +77,10 @@ List Insert(List l, const char* time, const char* size, const char* location) {
     strcpy(e->location, location);
     e->next = NULL;
 
+    // Nếu danh sách rỗng, trả về phần tử mới
     if (!l) return e;
 
+    // Chèn phần tử mới vào vị trí thích hợp
     Photo* current = l;
     Photo* prev = NULL;
     while (current && (strcmp(current->time, time) < 0 || (strcmp(current->time, time) == 0 && strcmp(current->location, location) < 0))) {
@@ -197,17 +188,7 @@ int main() {
         int hour = 8 + (i / 5) % 12;
         int minute = (i % 5) * 10;
         char time[20];
-        char day_str[3], hour_str[3], minute_str[3];
-        sprintf(day_str, "%02d", 1 + i/50);
-        sprintf(hour_str, "%02d", hour);
-        sprintf(minute_str, "%02d", minute);
-
-        strcpy(time, "202401");
-        strcat(time, day_str);
-        strcat(time, "_");
-        strcat(time, hour_str);
-        strcat(time, minute_str);
-        
+        snprintf(time, sizeof(time), "202401%02d_%02d%02d", 1 + i/50, hour, minute);
         L1 = Insert(L1, time, sizes[i % 4], locations[i % 8]);
     }
 
@@ -221,7 +202,6 @@ int main() {
         printf("6. Xoa anh trung lap\n");
         printf("7. Tim kiem anh theo ngay va dia diem\n");
         printf("8. Khoi phuc anh\n");
-        printf("9. Xem danh sach anh da xoa\n");
         printf("0. Thoat\n");
         printf("Lua chon cua ban: ");
         int choice;
@@ -262,39 +242,25 @@ int main() {
                     } while (minute < 0 || minute > 59);
                 }
 
-                // Tạo chuỗi thời gian
-                char time[20];
-                char year_str[5], month_str[3], day_str[3], hour_str[3], minute_str[3];
-                sprintf(year_str, "%04d", year);
-                sprintf(month_str, "%02d", month);
-                sprintf(day_str, "%02d", day);
-                sprintf(hour_str, "%02d", hour);
-                sprintf(minute_str, "%02d", minute);
-
-                if (hour == -1) {
-                    strcpy(time, year_str);
-                    strcat(time, month_str);
-                    strcat(time, day_str);
-                } else {
-                    strcpy(time, year_str);
-                    strcat(time, month_str);
-                    strcat(time, day_str);
-                    strcat(time, "_");
-                    strcat(time, hour_str);
-                    strcat(time, minute_str);
-                }
-
-                // Nhập kích thước (có thể có hoặc không)
-                char inputSize[20];
-                printf("Nhap kich thuoc (co the co hoac khong, nhap '-1' de bo qua, VD: 3840x2160): ");
-                scanf("%s", inputSize);
-                if (strcmp(inputSize, "-1") != 0) {
-                    strcpy(size, inputSize);
-                }
-
                 // Nhập địa điểm
                 printf("Nhap dia diem (VD: Ha_Noi): ");
                 scanf("%s", location);
+
+                // Nhập kích thước (có thể có hoặc không)
+                char inputSize[20];
+                printf("Nhap kich thuoc (co the co hoac khong, nhap 'default' de bo qua, VD: 3840x2160): ");
+                scanf("%s", inputSize);
+                if (strcmp(inputSize, "default") != 0) {
+                    strcpy(size, inputSize);
+                }
+
+                // Tạo chuỗi thời gian
+                char time[20];
+                if (hour == -1) {
+                    snprintf(time, sizeof(time), "%04d%02d%02d", year, month, day);
+                } else {
+                    snprintf(time, sizeof(time), "%04d%02d%02d_%02d%02d", year, month, day, hour, minute);
+                }
 
                 // Thêm ảnh vào danh sách
                 L1 = Insert(L1, time, size, location);
@@ -359,25 +325,11 @@ int main() {
                 }
 
                 // Tạo chuỗi thời gian mới
-                char year_str[5], month_str[3], day_str[3], hour_str[3], minute_str[3];
-                sprintf(year_str, "%04d", year);
-                sprintf(month_str, "%02d", month);
-                sprintf(day_str, "%02d", day);
-                sprintf(hour_str, "%02d", hour);
-                sprintf(minute_str, "%02d", minute);
-
                 if (year != -1 && month != -1 && day != -1) {
                     if (hour == -1) {
-                        strcpy(newTime, year_str);
-                        strcat(newTime, month_str);
-                        strcat(newTime, day_str);
+                        sprintf(newTime, "%04d%02d%02d", year, month, day);
                     } else {
-                        strcpy(newTime, year_str);
-                        strcat(newTime, month_str);
-                        strcat(newTime, day_str);
-                        strcat(newTime, "_");
-                        strcat(newTime, hour_str);
-                        strcat(newTime, minute_str);
+                        sprintf(newTime, "%04d%02d%02d_%02d%02d", year, month, day, hour, minute);
                     }
                 }
 
@@ -448,13 +400,6 @@ int main() {
                 int ID;
                 scanf("%d", &ID);
                 L1 = Restore(L1, ID);
-                break;
-            }
-            case 9: {
-                printf("\n--- DANH SACH ANH DA XOA ---\n");
-                printf("ID | Thoi gian | Kich thuoc | Dia diem\n");
-                printf("----------------------------------------\n");
-                PrintDeleted(deletedPhotos);
                 break;
             }
             default:
