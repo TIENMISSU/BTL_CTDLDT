@@ -15,6 +15,9 @@ typedef Photo* List;
 // Global variable to keep track of the next available ID
 int nextID = 1001;
 
+// Danh sách để lưu trữ các ảnh đã bị xóa
+List deletedPhotos = NULL;
+
 List LInit() {
     return NULL;
 }
@@ -93,11 +96,12 @@ List Insert(List l, const char* time, const char* size, const char* location) {
     return l;
 }
 
-List Delete(List l, Photo* a) {
+List MoveToDeleted(List l, Photo* a) {
     if (!l || !a) return l;
     if (l == a) {
         List temp = l->next;
-        free(l);
+        a->next = deletedPhotos;
+        deletedPhotos = a;
         return temp;
     }
 
@@ -107,9 +111,14 @@ List Delete(List l, Photo* a) {
     }
     if (current->next == a) {
         current->next = a->next;
-        free(a);
+        a->next = deletedPhotos;
+        deletedPhotos = a;
     }
     return l;
+}
+
+List Delete(List l, Photo* a) {
+    return MoveToDeleted(l, a);
 }
 
 void Edit(List l, int eID, const char* eTime, const char* eSize, const char* eLocation) {
@@ -145,14 +154,36 @@ List RemoveDuplicate(List l) {
     return l;
 }
 
+List Restore(List l, int ID) {
+    Photo* prev = NULL;
+    Photo* current = deletedPhotos;
+    while (current) {
+        if (current->ID == ID) {
+            if (prev) {
+                prev->next = current->next;
+            } else {
+                deletedPhotos = current->next;
+            }
+            current->next = l;
+            l = current;
+            printf("Da khoi phuc anh voi ID %d\n", ID);
+            return l;
+        }
+        prev = current;
+        current = current->next;
+    }
+    printf("Khong tim thay anh voi ID %d trong danh sach da xoa\n", ID);
+    return l;
+}
+
 int main() {
     List L1 = LInit();
 
-    // Mang chua dia diem va kich thuoc 
+    // Mang chua dia diem va kich thuoc
     const char* locations[8] = { "Ha_Noi", "Bac_Ninh", "Hai_Phong", "Quang_Ninh", "Thai_Binh", "Nam_Dinh", "Bac_Giang", "Lang_Son" };
     const char* sizes[4] = {"3840x2160", "1920x1080", "2560x1440", "1280x720"};
 
-    // Tao 100 anh mau 
+    // Tao 100 anh mau
     for (int i = 1; i <= 100; i++) {
         int hour = 8 + (i / 5) % 12;
         int minute = (i % 5) * 10;
@@ -170,6 +201,7 @@ int main() {
         printf("5. Hien thi tat ca anh\n");
         printf("6. Xoa anh trung lap\n");
         printf("7. Tim kiem anh theo ngay va dia diem\n");
+        printf("8. Khoi phuc anh\n");
         printf("0. Thoat\n");
         printf("Lua chon cua ban: ");
         int choice;
@@ -360,6 +392,14 @@ int main() {
                 // Tìm kiếm ảnh theo ngày và địa điểm
                 printf("\n--- TIM KIEM ANH ---\n");
                 FindByDateAndLocation(L1, year, month, day, hour, location);
+                break;
+            }
+            case 8: {
+                printf("\n--- KHOI PHUC ANH ---\n");
+                printf("Nhap ID anh can khoi phuc (Vi du: 1001): ");
+                int ID;
+                scanf("%d", &ID);
+                L1 = Restore(L1, ID);
                 break;
             }
             default:
