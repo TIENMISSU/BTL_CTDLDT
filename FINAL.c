@@ -382,14 +382,14 @@ int main() {
                 }
 
                 // Nhập kích thước mới
-                printf("Nhap kich thuoc moi (bo qua neu khong sua): ");
+                printf("Nhap kich thuoc moi (Vi du: 1234x5678, nhap -1 de bo qua): ");
                 scanf("%s", newSize);
                 if (strcmp(newSize, "-1") == 0) {
                     newSize[0] = '\0'; // Không thay đổi kích thước
                 }
 
                 // Nhập địa điểm mới
-                printf("Nhap dia diem moi (bo qua neu khong sua): ");
+                printf("Nhap dia diem moi (Vi du: Ha_Noi, nhap -1 de bo qua): ");
                 scanf("%s", newLocation);
                 if (strcmp(newLocation, "-1") == 0) {
                     newLocation[0] = '\0'; // Không thay đổi địa điểm
@@ -400,7 +400,7 @@ int main() {
             }
             case 5: {
                 printf("\n--- DANH SACH ANH ---\n");
-                printf("ID | Thoi gian | Kich thuoc | Dia diem\n");
+                printf("ID  | Thoi gian   | Kich thuoc | Dia diem\n");
                 printf("----------------------------------------\n");
                 Print(L1);
                 break;
