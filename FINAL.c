@@ -95,8 +95,8 @@ void FindByDateAndLocation(List l, int year, int month, int day, int hour, const
         }
     }
 }
-// Insert a new photo into the list in sorted order by time and location
-List Insert(List l, const char* time, const char* size, const char* location) {
+// Hàm chèn ảnh vào cuối danh sách
+List InsertAtEnd(List l, const char* time, const char* size, const char* location) {
     int ID = nextID++;
     Photo* e = (Photo*)malloc(sizeof(Photo));
     e->ID = ID;
@@ -108,20 +108,12 @@ List Insert(List l, const char* time, const char* size, const char* location) {
     if (!l) return e;
 
     Photo* current = l;
-    Photo* prev = NULL;
-    while (current && (strcmp(current->time, time) < 0 || (strcmp(current->time, time) == 0 && strcmp(current->location, location) < 0))) {
-        prev = current;
+    while (current->next) {
         current = current->next;
     }
-    e->next = current;
-    if (prev) {
-        prev->next = e;
-    } else {
-        l = e;
-    }
+    current->next = e;
     return l;
 }
-
 // Move a photo to the deleted list
 List MoveToDeleted(List l, Photo* a) {
     if (!l || !a) return l;
@@ -164,23 +156,43 @@ void Edit(List l, int eID, const char* eTime, const char* eSize, const char* eLo
     printf("Khong tim thay ID anh.\n");
 }
 
-// Remove duplicate photos from the list
+// Hàm xóa ảnh trùng lặp và di chuyển vào thùng rác
 List RemoveDuplicate(List l) {
+    if (!l) return l; // Nếu danh sách trống, trả về ngay
+
     Photo* current = l;
-    while (current) {
+    while (current && current->next) {
         Photo* runner = current;
         while (runner->next) {
-            if (runner->next->ID == current->ID && 
-                strcmp(runner->next->time, current->time) == 0 &&
+            if (strcmp(runner->next->time, current->time) == 0 &&
                 strcmp(runner->next->size, current->size) == 0 &&
                 strcmp(runner->next->location, current->location) == 0) {
-                runner->next = Delete(l, runner->next);
+                Photo* duplicate = runner->next;
+                runner->next = duplicate->next;
+                // Di chuyển ảnh trùng lặp vào thùng rác
+                deletedPhotos = InsertAtEnd(deletedPhotos, duplicate->time, duplicate->size, duplicate->location);
+                free(duplicate); // Giải phóng bộ nhớ
             } else {
                 runner = runner->next;
             }
         }
         current = current->next;
     }
+    return l;
+}
+// Hàm chèn ảnh theo thứ tự ID
+List InsertByID(List l, Photo* e) {
+    if (!l || e->ID < l->ID) {
+        e->next = l;
+        return e;
+    }
+
+    Photo* current = l;
+    while (current->next && current->next->ID < e->ID) {
+        current = current->next;
+    }
+    e->next = current->next;
+    current->next = e;
     return l;
 }
 
@@ -195,8 +207,8 @@ List Restore(List l, int ID) {
             } else {
                 deletedPhotos = current->next;
             }
-            current->next = l;
-            l = current;
+            current->next = NULL; // Detach from deleted list
+            l = InsertByID(l, current); // Insert back into the main list
             printf("Da khoi phuc anh voi ID %d\n", ID);
             return l;
         }
@@ -206,7 +218,6 @@ List Restore(List l, int ID) {
     printf("Khong tim thay anh voi ID %d trong danh sach da xoa\n", ID);
     return l;
 }
-
 // Main function to run the photo album management program
 int main() {
     List L1 = LInit();
@@ -231,7 +242,7 @@ int main() {
         strcat(time, hour_str);
         strcat(time, minute_str);
         
-        L1 = Insert(L1, time, sizes[i % 4], locations[i % 8]);
+        L1 = InsertAtEnd(L1, time, sizes[i % 4], locations[i % 8]);
     }
 
     while (1) {
@@ -260,7 +271,7 @@ int main() {
                 Print(L1);
                 break;
             }
-            case 2: {
+            case 2:  {
                 printf("\n--- THEM ANH MOI ---\n");
                 int year, month, day, hour = -1, minute = -1;
                 char size[20] = "1920x1080"; // default size
@@ -305,6 +316,7 @@ int main() {
                     strcpy(time, year_str);
                     strcat(time, month_str);
                     strcat(time, day_str);
+                    strcat(time, "_0000"); // Mặc định là "0000" nếu không nhập giờ
                 } else {
                     strcpy(time, year_str);
                     strcat(time, month_str);
@@ -323,11 +335,14 @@ int main() {
                 }
 
                 // Nhập địa điểm
-                printf("Nhap dia diem (VD: Ha_Noi): ");
+                printf("Nhap dia diem (VD: Ha_Noi, nhap '-1' de bo qua): ");
                 scanf("%s", location);
+                if (strcmp(location, "-1") == 0) {
+                    strcpy(location, "Khong ro"); // Địa điểm mặc định
+                }
 
                 // Thêm ảnh vào danh sách
-                L1 = Insert(L1, time, size, location);
+                L1 = InsertAtEnd(L1, time, size, location);
                 printf("Da them anh thanh cong! Ma anh la: %d\n", nextID - 1);
                 break;
             }
