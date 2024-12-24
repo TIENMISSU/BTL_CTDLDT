@@ -29,10 +29,16 @@ void Print(const List l) {
 }
 
 void PrintDeleted(const List l) {
+    if (l == NULL) {
+        printf("Khong co anh trong thung rac\n");
+        return;
+    }
+
     for (List temp = l; temp; temp = temp->next) {
         printf("%d %s %s %s\n", temp->ID, temp->time, temp->size, temp->location);
     }
 }
+
 
 int FindByID(List l, int ID) {
     int pos = 1;
@@ -56,12 +62,23 @@ void FindByDateAndLocation(List l, int year, int month, int day, int hour, const
     int found = 0;
     char date[9];
     char year_str[5], month_str[3], day_str[3];
+    char input_location[256];
     sprintf(year_str, "%04d", year);
     sprintf(month_str, "%02d", month);
     sprintf(day_str, "%02d", day);
     strcpy(date, year_str);
     strcat(date, month_str);
     strcat(date, day_str);
+
+    // Kiểm tra định dạng địa điểm
+    do {
+        if (strcmp(location, "-1") == 0 || valid_location_format(location)) {
+            break;
+        }
+        printf("Dinh dang dia diem khong dung. Vui long nhap lai: ");
+        scanf("%255s", input_location);
+        location = input_location;
+    } while (1);
 
     while (l) {
         // Kiểm tra ngày tháng năm và địa điểm
@@ -213,15 +230,15 @@ int main() {
 
     while (1) {
         printf("\n=== QUAN LY ALBUM ANH ===\n");
-        printf("1. Them anh moi\n");
-        printf("2. Tim kiem anh theo ID\n");
-        printf("3. Xoa anh\n");
-        printf("4. Sua thong tin anh\n");
-        printf("5. Hien thi tat ca anh\n");
+        printf("1. Hien thi tat ca anh\n");
+        printf("2. Them anh moi\n");
+        printf("3. Tim kiem anh theo ID\n");
+        printf("4. Tim kiem anh theo ngay va dia diem\n");
+        printf("5. Sua thong tin anh\n");
         printf("6. Xoa anh trung lap\n");
-        printf("7. Tim kiem anh theo ngay va dia diem\n");
-        printf("8. Khoi phuc anh\n");
-        printf("9. Xem danh sach anh da xoa\n");
+        printf("7. Cho anh vao thung rac\n");
+        printf("8. Thung rac\n");
+        printf("9. Khoi phuc anh\n");
         printf("0. Thoat\n");
         printf("Lua chon cua ban: ");
         int choice;
@@ -230,7 +247,14 @@ int main() {
         if (choice == 0) break;
 
         switch (choice) {
-            case 1: {
+             case 1: {
+                printf("\n--- DANH SACH ANH ---\n");
+                printf("ID  | Thoi gian   | Kich thuoc | Dia diem\n");
+                printf("----------------------------------------\n");
+                Print(L1);
+                break;
+            }
+            case 2: {
                 printf("\n--- THEM ANH MOI ---\n");
                 int year, month, day, hour = -1, minute = -1;
                 char size[20] = "1920x1080"; // default size
@@ -301,7 +325,7 @@ int main() {
                 printf("Da them anh thanh cong! Ma anh la: %d\n", nextID - 1);
                 break;
             }
-            case 2: {
+            case 3: {
                 printf("\n--- TIM KIEM ANH THEO ID ---\n");
                 printf("Nhap ID anh can tim (Vi du: 1001): ");
                 int ID;
@@ -309,22 +333,38 @@ int main() {
                 FindByID(L1, ID);
                 break;
             }
-            case 3: {
-                printf("\n--- XOA ANH ---\n");
-                printf("Nhap ID anh can xoa (Vi du: 1001): ");
-                int ID;
-                scanf("%d", &ID);
-                Photo* del = L1;
-                while (del && del->ID != ID) del = del->next;
-                if (del) {
-                    L1 = Delete(L1, del);
-                    printf("Da xoa anh voi ID %d\n", ID);
-                } else {
-                    printf("Khong tim thay anh!\n");
-                }
-                break;
-            }
+            
             case 4: {
+                printf("\n--- TIM KIEM ANH THEO NGAY VA DIA DIEM ---\n");
+                int year, month, day, hour;
+                char location[50];
+
+                do {
+                    printf("Nhap ngay (1-31): ");
+                    scanf("%d", &day);
+                } while (day < 1 || day > 31);
+
+                do {
+                    printf("Nhap thang (1-12): ");
+                    scanf("%d", &month);
+                } while (month < 1 || month > 12);
+
+                do {
+                    printf("Nhap nam (4 chu so): ");
+                    scanf("%d", &year);
+                } while (year < 1000 || year > 9999);
+
+                printf("Nhap gio (0-23, nhap -1 de bo qua): ");
+                scanf("%d", &hour);
+
+                printf("Nhap dia diem (VD: Ha_Noi, nhap -1 de bo qua): ");
+                scanf("%s", location);
+
+                // Tìm kiếm ảnh theo ngày và địa điểm
+                printf("\n--- TIM KIEM ANH ---\n");
+                FindByDateAndLocation(L1, year, month, day, hour, location);
+                break;
+            case 5: {
                 printf("\n--- SUA THONG TIN ANH ---\n");
                 printf("Nhap ID anh can sua (Vi du: 1001): ");
                 int ID;
@@ -398,63 +438,44 @@ int main() {
                 Edit(L1, ID, newTime, newSize, newLocation);
                 break;
             }
-            case 5: {
-                printf("\n--- DANH SACH ANH ---\n");
-                printf("ID  | Thoi gian   | Kich thuoc | Dia diem\n");
-                printf("----------------------------------------\n");
-                Print(L1);
-                break;
-            }
+        
             case 6: {
                 printf("\n--- XOA ANH TRUNG LAP ---\n");
                 L1 = RemoveDuplicate(L1);
                 printf("Da xoa xong cac anh trung lap!\n");
                 break;
             }
+            
             case 7: {
-                printf("\n--- TIM KIEM ANH THEO NGAY VA DIA DIEM ---\n");
-                int year, month, day, hour;
-                char location[50];
-
-                do {
-                    printf("Nhap ngay (1-31): ");
-                    scanf("%d", &day);
-                } while (day < 1 || day > 31);
-
-                do {
-                    printf("Nhap thang (1-12): ");
-                    scanf("%d", &month);
-                } while (month < 1 || month > 12);
-
-                do {
-                    printf("Nhap nam (4 chu so): ");
-                    scanf("%d", &year);
-                } while (year < 1000 || year > 9999);
-
-                printf("Nhap gio (0-23, nhap -1 de bo qua): ");
-                scanf("%d", &hour);
-
-                printf("Nhap dia diem (VD: Ha_Noi, nhap -1 de bo qua): ");
-                scanf("%s", location);
-
-                // Tìm kiếm ảnh theo ngày và địa điểm
-                printf("\n--- TIM KIEM ANH ---\n");
-                FindByDateAndLocation(L1, year, month, day, hour, location);
+                printf("\n--- XOA ANH ---\n");
+                printf("Nhap ID anh can xoa (Vi du: 1001): ");
+                int ID;
+                scanf("%d", &ID);
+                Photo* del = L1;
+                while (del && del->ID != ID) del = del->next;
+                if (del) {
+                    L1 = Delete(L1, del);
+                    printf("Da xoa anh voi ID %d\n", ID);
+                } else {
+                    printf("Khong tim thay anh!\n");
+                }
                 break;
             }
+        }
+            
             case 8: {
+                printf("\n--- DANH SACH ANH DA XOA ---\n");
+                printf("ID | Thoi gian | Kich thuoc | Dia diem\n");
+                printf("----------------------------------------\n");
+                PrintDeleted(deletedPhotos);
+                break;
+            }
+            case 9: {
                 printf("\n--- KHOI PHUC ANH ---\n");
                 printf("Nhap ID anh can khoi phuc (Vi du: 1001): ");
                 int ID;
                 scanf("%d", &ID);
                 L1 = Restore(L1, ID);
-                break;
-            }
-            case 9: {
-                printf("\n--- DANH SACH ANH DA XOA ---\n");
-                printf("ID | Thoi gian | Kich thuoc | Dia diem\n");
-                printf("----------------------------------------\n");
-                PrintDeleted(deletedPhotos);
                 break;
             }
             default:
