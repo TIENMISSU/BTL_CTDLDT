@@ -21,6 +21,10 @@ int nextID = 1001;
 // List to store deleted photos
 List deletedPhotos = NULL;
 
+// Khai báo hàm DeletePermanently và MoveMultipleToDeleted
+List DeletePermanently(List l, int ID);
+List MoveMultipleToDeleted(List l, const char* ids);
+
 // Initialize an empty list
 List LInit() {
     return NULL;
@@ -34,14 +38,36 @@ void Print(const List l) {
 }
 
 // Print all photos in the deleted list
-void PrintDeleted(const List l) {
+void PrintDeleted(List l) {
     if (l == NULL) {
         printf("Khong co anh trong thung rac\n");
         return;
     }
-
     for (List temp = l; temp; temp = temp->next) {
         printf("%d %s %s %s\n", temp->ID, temp->time, temp->size, temp->location);
+    }
+    printf("\nBan co muon xoa vinh vien anh nao khong? (Yes-1/No-2): ");
+    int choice;
+    scanf("%d", &choice);
+    if (choice == 1) {
+        printf("Nhap cac ID anh can xoa vinh vien (cach nhau boi dau cach): ");
+        char ids[256];
+        scanf(" %[^\n]", ids);
+        char id[10];
+        int index = 0;
+        for (int i = 0; ids[i] != '\0'; i++) {
+            if (ids[i] == ' ') {
+                id[index] = '\0';
+                int ID = atoi(id);
+                deletedPhotos = DeletePermanently(deletedPhotos, ID);
+                index = 0;
+            } else {
+                id[index++] = ids[i];
+            }
+        }
+        id[index] = '\0';  // Xử lý ID cuối cùng
+        int ID = atoi(id);
+        deletedPhotos = DeletePermanently(deletedPhotos, ID);
     }
 }
 
@@ -114,6 +140,7 @@ List InsertAtEnd(List l, const char* time, const char* size, const char* locatio
     current->next = e;
     return l;
 }
+
 // Move a photo to the deleted list
 List MoveToDeleted(List l, Photo* a) {
     if (!l || !a) return l;
@@ -196,6 +223,28 @@ List InsertByID(List l, Photo* e) {
     return l;
 }
 
+// Delete a photo permanently by ID (in Trashbin)
+List DeletePermanently(List l, int ID) {
+    Photo* prev = NULL;
+    Photo* current = l;
+    while (current) {
+        if (current->ID == ID) {
+            if (prev) {
+                prev->next = current->next;
+            } else {
+                l = current->next;
+            }
+            free(current); // Giải phóng bộ nhớ
+            printf("Da xoa vinh vien anh voi ID %d\n", ID);
+            return l;
+        }
+        prev = current;
+        current = current->next;
+    }
+    printf("Khong tim thay anh voi ID %d trong danh sach da xoa\n", ID);
+    return l;
+}
+
 // Restore a photo from the deleted list back to the main list
 List Restore(List l, int ID) {
     Photo* prev = NULL;
@@ -218,13 +267,12 @@ List Restore(List l, int ID) {
     printf("Khong tim thay anh voi ID %d trong danh sach da xoa\n", ID);
     return l;
 }
-// Main function to run the photo album management program
 int main() {
     List L1 = LInit();
 
     // Arrays containing locations and sizes
     const char* locations[8] = { "Ha_Noi", "Bac_Ninh", "Hai_Phong", "Quang_Ninh", "Thai_Binh", "Nam_Dinh", "Bac_Giang", "Lang_Son" };
-    const char* sizes[4] = {"3840x2160", "1920x1080", "2560x1440", "1280x720"};
+    const char* sizes[4] = { "3840x2160", "1920x1080", "2560x1440", "1280x720" };
 
     // Create 100 sample photos
     for (int i = 1; i <= 100; i++) {
@@ -241,7 +289,7 @@ int main() {
         strcat(time, "_");
         strcat(time, hour_str);
         strcat(time, minute_str);
-        
+
         L1 = InsertAtEnd(L1, time, sizes[i % 4], locations[i % 8]);
     }
 
@@ -271,7 +319,7 @@ int main() {
                 Print(L1);
                 break;
             }
-            case 2:  {
+            case 2: {
                 printf("\n--- THEM ANH MOI ---\n");
                 int year, month, day, hour = -1, minute = -1;
                 char size[20] = "1920x1080"; // default size
@@ -467,16 +515,37 @@ int main() {
             }
             case 7: {
                 printf("\n--- XOA ANH ---\n");
-                printf("Nhap ID anh can xoa (Vi du: 1001): ");
-                int ID;
-                scanf("%d", &ID);
+                printf("Nhap cac ID anh can xoa (cach nhau boi dau cach, VD: 1001 1002 1003): ");
+                char ids[256];
+                scanf(" %[^\n]", ids);
+                char id[10];
+                int index = 0;
+                for (int i = 0; ids[i] != '\0'; i++) {
+                    if (ids[i] == ' ') {
+                        id[index] = '\0';
+                        int ID = atoi(id);
+                        Photo* del = L1;
+                        while (del && del->ID != ID) del = del->next;
+                        if (del) {
+                            L1 = Delete(L1, del);
+                            printf("Da xoa anh voi ID %d\n", ID);
+                        } else {
+                            printf("Khong tim thay anh voi ID %d\n", ID);
+                        }
+                        index = 0;
+                    } else {
+                        id[index++] = ids[i];
+                    }
+                }
+                id[index] = '\0';  // Xử lý ID cuối cùng
+                int ID = atoi(id);
                 Photo* del = L1;
                 while (del && del->ID != ID) del = del->next;
                 if (del) {
                     L1 = Delete(L1, del);
                     printf("Da xoa anh voi ID %d\n", ID);
                 } else {
-                    printf("Khong tim thay anh!\n");
+                    printf("Khong tim thay anh voi ID %d\n", ID);
                 }
                 break;
             }

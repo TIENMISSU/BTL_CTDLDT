@@ -1,18 +1,20 @@
-List RemoveDuplicate(List l) {
-    Photo* current = l;
-    while (current) {
-        Photo* runner = current;
-        while (runner->next) {
-            if (runner->next->ID == current->ID && 
-                strcmp(runner->next->time, current->time) == 0 &&
-                strcmp(runner->next->size, current->size) == 0 &&
-                strcmp(runner->next->location, current->location) == 0) {
-                runner->next = Delete(l, runner->next);
-            } else {
-                runner = runner->next;
-            }
+
+
+// Find a photo by ID and print its details
+int FindByID(List l, int ID) {
+    int pos = 1;
+    while (l) {
+        if (l->ID == ID) {
+            printf("Anh voi ID %d\n", ID);
+            printf("Vi tri: %d\n", pos);
+            printf("Thoi gian: %s\n", l->time);
+            printf("Kich thuoc: %s\n", l->size);
+            printf("Dia diem: %s\n", l->location);
+            return pos;
         }
-        current = current->next;
+        l = l->next;
+        ++pos;
     }
-    return l;
+    printf("Khong tim thay anh voi ID %d\n", ID);
+    return -1;
 }
