@@ -1,7 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 
+// Define the Photo struct
 typedef struct SPhoto {
     int ID;
     char time[20];
@@ -10,24 +12,28 @@ typedef struct SPhoto {
     struct SPhoto* next;
 } Photo;
 
+// Define List as a pointer to a Photo
 typedef Photo* List;
 
 // Global variable to keep track of the next available ID
 int nextID = 1001;
 
-// Danh sách để lưu trữ các ảnh đã bị xóa
+// List to store deleted photos
 List deletedPhotos = NULL;
 
+// Initialize an empty list
 List LInit() {
     return NULL;
 }
 
+// Print all photos in the list
 void Print(const List l) {
     for (List temp = l; temp; temp = temp->next) {
         printf("%d %s %s %s\n", temp->ID, temp->time, temp->size, temp->location);
     }
 }
 
+// Print all photos in the deleted list
 void PrintDeleted(const List l) {
     if (l == NULL) {
         printf("Khong co anh trong thung rac\n");
@@ -39,7 +45,7 @@ void PrintDeleted(const List l) {
     }
 }
 
-
+// Find a photo by ID and print its details
 int FindByID(List l, int ID) {
     int pos = 1;
     while (l) {
@@ -58,44 +64,38 @@ int FindByID(List l, int ID) {
     return -1;
 }
 
+// Find photos by date and location and print their details
+// Hàm hỗ trợ để tạo chuỗi ngày từ các thành phần năm, tháng, ngày
+void CreateDateString(char* date, int year, int month, int day) {
+    sprintf(date, "%04d%02d%02d", year, month, day);
+}
+
+// Hàm cải thiện để tìm kiếm ảnh theo thời gian và địa điểm
 void FindByDateAndLocation(List l, int year, int month, int day, int hour, const char* location) {
-    int found = 0;
+    bool found = false;
     char date[9];
-    char year_str[5], month_str[3], day_str[3];
-    char input_location[256];
-    sprintf(year_str, "%04d", year);
-    sprintf(month_str, "%02d", month);
-    sprintf(day_str, "%02d", day);
-    strcpy(date, year_str);
-    strcat(date, month_str);
-    strcat(date, day_str);
-
-    // Kiểm tra định dạng địa điểm
-    do {
-        if (strcmp(location, "-1") == 0 || valid_location_format(location)) {
-            break;
-        }
-        printf("Dinh dang dia diem khong dung. Vui long nhap lai: ");
-        scanf("%255s", input_location);
-        location = input_location;
-    } while (1);
-
+    CreateDateString(date, year, month, day);
+    
     while (l) {
-        // Kiểm tra ngày tháng năm và địa điểm
+        // Kiểm tra ngày và địa điểm
         if (strncmp(l->time, date, 8) == 0 &&
-            (hour == -1 || (hour != -1 && strncmp(l->time + 9, "00", 2) == 0)) &&
+            (hour == -1 || (hour != -1 && atoi(l->time + 9) == hour)) &&
             (strcmp(location, "-1") == 0 || strcmp(l->location, location) == 0)) {
             printf("ID: %d\nThoi gian: %s\nKich thuoc: %s\nDia diem: %s\n", l->ID, l->time, l->size, l->location);
-            found = 1;
+            found = true;
         }
         l = l->next;
     }
 
     if (!found) {
-        printf("Khong tim thay anh voi ngay %s va dia diem %s\n", date, location);
+        if (strcmp(location, "-1") == 0) {
+            printf("Khong tim thay anh voi ngay %s va dia diem bat ky\n", date);
+        } else {
+            printf("Khong tim thay anh voi ngay %s va dia diem %s\n", date, location);
+        }
     }
 }
-
+// Insert a new photo into the list in sorted order by time and location
 List Insert(List l, const char* time, const char* size, const char* location) {
     int ID = nextID++;
     Photo* e = (Photo*)malloc(sizeof(Photo));
@@ -122,6 +122,7 @@ List Insert(List l, const char* time, const char* size, const char* location) {
     return l;
 }
 
+// Move a photo to the deleted list
 List MoveToDeleted(List l, Photo* a) {
     if (!l || !a) return l;
     if (l == a) {
@@ -143,10 +144,12 @@ List MoveToDeleted(List l, Photo* a) {
     return l;
 }
 
+// Delete a photo by moving it to the deleted list
 List Delete(List l, Photo* a) {
     return MoveToDeleted(l, a);
 }
 
+// Edit a photo's details by ID
 void Edit(List l, int eID, const char* eTime, const char* eSize, const char* eLocation) {
     while (l) {
         if (l->ID == eID) {
@@ -161,6 +164,7 @@ void Edit(List l, int eID, const char* eTime, const char* eSize, const char* eLo
     printf("Khong tim thay ID anh.\n");
 }
 
+// Remove duplicate photos from the list
 List RemoveDuplicate(List l) {
     Photo* current = l;
     while (current) {
@@ -180,6 +184,7 @@ List RemoveDuplicate(List l) {
     return l;
 }
 
+// Restore a photo from the deleted list back to the main list
 List Restore(List l, int ID) {
     Photo* prev = NULL;
     Photo* current = deletedPhotos;
@@ -202,20 +207,21 @@ List Restore(List l, int ID) {
     return l;
 }
 
+// Main function to run the photo album management program
 int main() {
     List L1 = LInit();
 
-    // Mang chua dia diem va kich thuoc
+    // Arrays containing locations and sizes
     const char* locations[8] = { "Ha_Noi", "Bac_Ninh", "Hai_Phong", "Quang_Ninh", "Thai_Binh", "Nam_Dinh", "Bac_Giang", "Lang_Son" };
     const char* sizes[4] = {"3840x2160", "1920x1080", "2560x1440", "1280x720"};
 
-    // Tao 100 anh mau
+    // Create 100 sample photos
     for (int i = 1; i <= 100; i++) {
         int hour = 8 + (i / 5) % 12;
         int minute = (i % 5) * 10;
         char time[20];
         char day_str[3], hour_str[3], minute_str[3];
-        sprintf(day_str, "%02d", 1 + i/50);
+        sprintf(day_str, "%02d", 1 + i / 50);
         sprintf(hour_str, "%02d", hour);
         sprintf(minute_str, "%02d", minute);
 
@@ -247,7 +253,7 @@ int main() {
         if (choice == 0) break;
 
         switch (choice) {
-             case 1: {
+            case 1: {
                 printf("\n--- DANH SACH ANH ---\n");
                 printf("ID  | Thoi gian   | Kich thuoc | Dia diem\n");
                 printf("----------------------------------------\n");
@@ -333,7 +339,6 @@ int main() {
                 FindByID(L1, ID);
                 break;
             }
-            
             case 4: {
                 printf("\n--- TIM KIEM ANH THEO NGAY VA DIA DIEM ---\n");
                 int year, month, day, hour;
@@ -364,6 +369,7 @@ int main() {
                 printf("\n--- TIM KIEM ANH ---\n");
                 FindByDateAndLocation(L1, year, month, day, hour, location);
                 break;
+            }
             case 5: {
                 printf("\n--- SUA THONG TIN ANH ---\n");
                 printf("Nhap ID anh can sua (Vi du: 1001): ");
@@ -438,14 +444,12 @@ int main() {
                 Edit(L1, ID, newTime, newSize, newLocation);
                 break;
             }
-        
             case 6: {
                 printf("\n--- XOA ANH TRUNG LAP ---\n");
                 L1 = RemoveDuplicate(L1);
                 printf("Da xoa xong cac anh trung lap!\n");
                 break;
             }
-            
             case 7: {
                 printf("\n--- XOA ANH ---\n");
                 printf("Nhap ID anh can xoa (Vi du: 1001): ");
@@ -461,8 +465,6 @@ int main() {
                 }
                 break;
             }
-        }
-            
             case 8: {
                 printf("\n--- DANH SACH ANH DA XOA ---\n");
                 printf("ID | Thoi gian | Kich thuoc | Dia diem\n");
