@@ -13,10 +13,10 @@ typedef struct SPhoto {
 } Photo;
 
 // Define List as a pointer to a Photo
-typedef Photo* List;
+typedef Photo* List;  // Khai báo một danh sách liên kết 
 
-// Global variable to keep track of the next available ID
-int nextID = 1001;
+
+int nextID = 1001; // Mã của ảnh tiếp theo, sau ảnh thứ 100
 
 // List to store deleted photos
 List deletedPhotos = NULL;
@@ -30,14 +30,14 @@ List LInit() {
     return NULL;
 }
 
-// Print all photos in the list
+// In danh sách các ảnh trong album
 void Print(const List l) {
     for (List temp = l; temp; temp = temp->next) {
         printf("%d %s %s %s\n", temp->ID, temp->time, temp->size, temp->location);
     }
 }
 
-// Print all photos in the deleted list
+// In danh sách các ảnh đã xóa (trong thùng rác)
 void PrintDeleted(List l) {
     if (l == NULL) {
         printf("Khong co anh trong thung rac\n");
@@ -51,7 +51,7 @@ void PrintDeleted(List l) {
     scanf("%d", &choice);
     if (choice == 1) {
         printf("Nhap cac ID anh can xoa vinh vien (cach nhau boi dau cach): ");
-        char ids[256];
+        char ids[4];
         scanf(" %[^\n]", ids);
         char id[10];
         int index = 0;
@@ -121,27 +121,36 @@ void FindByDateAndLocation(List l, int year, int month, int day, int hour, const
         }
     }
 }
-// Hàm chèn ảnh vào cuối danh sách
+// Hàm chèn ảnh vào cuối danh sách 
+// *****TIẾN*****
+
 List InsertAtEnd(List l, const char* time, const char* size, const char* location) {
+    /* gán giá trị hiện tại của nextID cho ID, ví dụ ảnh mới đầu tiên sẽ có ID là 1001
+    Sau đó giá trị nextID tiếp theo sẽ là 1002*/
     int ID = nextID++;
-    Photo* e = (Photo*)malloc(sizeof(Photo));
-    e->ID = ID;
-    strcpy(e->time, time);
-    strcpy(e->size, size);
-    strcpy(e->location, location);
-    e->next = NULL;
+    /* cấp phát động một vùng nhớ để tạo một ảnh mới
+    */
+    Photo* new_image = (Photo*)malloc(sizeof(Photo)); 
+    //const char*: chuỗi bất biến, hàm chỉ đọc chuỗi, không sửa đổi
+    // chỉ chuyền địa chỉ của chuỗi vào hàm -> tiết kiệm dữ liệu
+    new_image->ID = ID;
+    strcpy(new_image->time, time);
+    strcpy(new_image->size, size);
+    strcpy(new_image->location, location);
+    // gán các giá trị đã nhập vào dữ liệu của new_image
+    new_image->next = NULL; // phần tử ảnh mới sẽ là phần tử cuối cùng trong danh sách
 
-    if (!l) return e;
+    if (l == NULL) return new_image; // new_image sẽ là phần tử đầu tiên của chuỗi nếu con trỏ l bằng rỗng
 
-    Photo* current = l;
+    Photo* current = l; // duyệt tất cả phần tử của danh sách để tìm phần tử cuối cùng
     while (current->next) {
         current = current->next;
     }
-    current->next = e;
+    current->next = new_image;
     return l;
 }
 
-// Move a photo to the deleted list
+// Thêm ảnh vào thùng rác (Xóa ảnh)
 List MoveToDeleted(List l, Photo* a) {
     if (!l || !a) return l;
     if (l == a) {
@@ -223,7 +232,7 @@ List InsertByID(List l, Photo* e) {
     return l;
 }
 
-// Delete a photo permanently by ID (in Trashbin)
+// Xóa ảnh vĩnh viễn trong thùng rác 
 List DeletePermanently(List l, int ID) {
     Photo* prev = NULL;
     Photo* current = l;
