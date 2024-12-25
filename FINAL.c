@@ -303,16 +303,25 @@ int main() {
 
 	// Create 100 sample photos
 	for (int i = 1; i <= 100; i++) {
-		int hour = 8 + (i / 5) % 12;
+		int hour = 12 + (i / 5) % 12;
 		int minute = (i % 5) * 10;
 		char time[20];
-		char day_str[3], hour_str[3], minute_str[3];
-		sprintf(day_str, "%02d", 1 + i / 50);
+		char month_str[3], day_str[3], hour_str[3], minute_str[3];
+
+		//giới hạn tháng nhỏ hơn bằng 12
+		int month = (5 + (i + 3) / 7) % 12;
+        if (month == 0) month = 12;
+
+		//giới hạn ngày nhỏ hơn = 31
+		int day = (i % 31) + 1;
+		sprintf(month_str, "%02d", month);
+		sprintf(day_str, "%02d", day);
 		sprintf(hour_str, "%02d", hour);
 		sprintf(minute_str, "%02d", minute);
 
-		strcpy(time, "202401");
-		strcat(time, day_str);
+		strcpy(time, "2024");
+		strcat(time, month_str);
+		strcat(time, day_str); // nối chu
 		strcat(time, "_");
 		strcat(time, hour_str);
 		strcat(time, minute_str);
@@ -536,7 +545,7 @@ int main() {
 			}
 
 			// Gọi hàm Edit để chỉnh sửa
-			Edit(L1, ID, newTime, newSize, newLocation);
+			Edit(L1, newTime, newSize, newLocation);
 		}
 
 		case 6: {
