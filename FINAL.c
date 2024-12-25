@@ -109,7 +109,6 @@ void FindByDateAndLocation(List l, int year, int month, int day, int hour, const
 	bool found = false;
 	char date[9];
 	CreateDateString(date, year, month, day);
-
 	while (l) {
 		// Kiểm tra ngày và địa điểm
 		if (strncmp(l->time, date, 8) == 0 &&
@@ -120,7 +119,6 @@ void FindByDateAndLocation(List l, int year, int month, int day, int hour, const
 		}
 		l = l->next;
 	}
-
 	if (!found) {
 		if (strcmp(location, "-1") == 0) {
 			printf("Khong tim thay anh voi ngay %s va dia diem bat ky\n", date);
@@ -249,6 +247,7 @@ List InsertByID(List l, Photo* e) {
 }
 
 // Xóa ảnh vĩnh viễn trong thùng rác 
+/******Tiến******/
 List DeletePermanently(List l, int ID) {
 	Photo* prev = NULL;
 	Photo* current = l;
