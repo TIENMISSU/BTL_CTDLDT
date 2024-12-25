@@ -58,7 +58,7 @@ void PrintDeleted(List l) {
     scanf("%d", &choice);
     if (choice == 1) {
         printf("Nhap cac ID anh can xoa vinh vien (cach nhau boi dau cach): ");
-        char ids[4];
+        char ids[256];
         scanf(" %[^\n]", ids);
         char id[10];
         int index = 0;
@@ -149,13 +149,13 @@ List InsertAtEnd(List l, const char* time, const char* size, const char* locatio
 
     if (l == NULL) return new_image; // new_image sẽ là phần tử đầu tiên của chuỗi nếu con trỏ l bằng rỗng
 
-    Photo* current = l; // duyệt tất cả phần tử của danh sách để tìm phần tử cuối cùng
+    Photo* current = l; // duyệt tất cả phần tử của danh sách 
     Duyet_danh_sach(l, new_image);
     return l;
 }
 
 // Thêm ảnh vào thùng rác (Xóa ảnh)
-//******TIẾN */
+//******TIẾN *******/
 
 List MoveToDeleted(List l, Photo* a) {
     //Photo* a là ảnh cần xóa
@@ -177,7 +177,7 @@ List MoveToDeleted(List l, Photo* a) {
 
     // Trường hợp phần tử cần xóa không phải là phần tử đầu
     Photo* current = l;
-    while (current->next && current->next != a) {
+    while (current->next != NULL && current->next != a) {
         current = current->next; // Duyệt qua các nút
     }
 
