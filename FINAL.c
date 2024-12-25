@@ -3,8 +3,8 @@
 #include <string.h>
 #include <stdbool.h>
 
-// Define the Photo struct
-typedef struct SPhoto {
+// Define the Photo struct    
+typedef struct SPhoto { 
     int ID;
     char time[20];
     char size[20];
@@ -29,7 +29,14 @@ List MoveMultipleToDeleted(List l, const char* ids);
 List LInit() {
     return NULL;
 }
-
+// Duyệt danh sách liên kết
+List Duyet_danh_sach(List l, Photo* a){
+    Photo* current = l;
+    while(current->next != NULL){
+        current = current->next;
+    }
+    current->next = a;
+}
 // In danh sách các ảnh trong album
 void Print(const List l) {
     for (List temp = l; temp; temp = temp->next) {
@@ -143,33 +150,48 @@ List InsertAtEnd(List l, const char* time, const char* size, const char* locatio
     if (l == NULL) return new_image; // new_image sẽ là phần tử đầu tiên của chuỗi nếu con trỏ l bằng rỗng
 
     Photo* current = l; // duyệt tất cả phần tử của danh sách để tìm phần tử cuối cùng
-    while (current->next) {
-        current = current->next;
-    }
-    current->next = new_image;
+    Duyet_danh_sach(l, new_image);
     return l;
 }
 
 // Thêm ảnh vào thùng rác (Xóa ảnh)
+//******TIẾN */
+
 List MoveToDeleted(List l, Photo* a) {
-    if (!l || !a) return l;
-    if (l == a) {
+    //Photo* a là ảnh cần xóa
+    /*Nếu danh sách ảnh, hay ảnh muốn thêm mà rỗng => không làm gì cả*/
+    if (l == NULL || a == NULL) return l; 
+
+    if (l == a) { // nếu phần từ cần xóa là phần tử đầu tiên
         List temp = l->next;
-        a->next = deletedPhotos;
-        deletedPhotos = a;
-        return temp;
+         a->next = NULL; // Đảm bảo phần tử xóa không trỏ lung tung.
+
+        if (deletedPhotos == NULL) {
+            // Nếu danh sách deletedPhotos rỗng, gán a làm đầu danh sách
+            deletedPhotos = a;
+        } else {
+            Duyet_danh_sach(deletedPhotos, a);
+        }
+        return temp; // Trả về danh sách mới.
     }
 
+    // Trường hợp phần tử cần xóa không phải là phần tử đầu
     Photo* current = l;
     while (current->next && current->next != a) {
-        current = current->next;
+        current = current->next; // Duyệt qua các nút
     }
-    if (current->next == a) {
-        current->next = a->next;
-        a->next = deletedPhotos;
-        deletedPhotos = a;
+
+    if (current->next == a) { // Nếu tìm thấy phần tử cần xóa
+        current->next = a->next; // Bỏ qua nút cần xóa trong danh sách chính
+        a->next = NULL; // Đảm bảo a không trỏ lung tung
+
+        if (deletedPhotos == NULL) {
+            deletedPhotos = a; // Nếu deletedPhotos rỗng, gán a làm đầu
+        } else {
+            Duyet_danh_sach(deletedPhotos, a);
+        }
     }
-    return l;
+    return l; // Trả về danh sách chính đã cập nhật.
 }
 
 // Delete a photo by moving it to the deleted list
